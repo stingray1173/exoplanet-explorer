@@ -1,0 +1,36 @@
+name: Update Exoplanet Data
+
+on:
+  schedule:
+    - cron: "0 0 * * 0" # Runs automatically every Sunday at midnight UTC
+  workflow_dispatch: # Allows you to manually trigger the pipeline from the browser
+
+permissions:
+  contents: write # Grants the bot permission to push the updated JSON to your repo
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Dependencies
+        run: pip install pandas numpy requests
+
+      - name: Run Data Pipeline
+        run: python scripts/fetch_data.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/exoplanets.json
+          git commit -m "Automated NASA API pull: Data refreshed" || exit 0
+          git push
